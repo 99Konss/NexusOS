@@ -1,0 +1,22 @@
+//KonsKernel
+
+KonsKernel is a personal learning project focused on building a custom operating system kernel.
+
+This project is primarily educational and experimental.  
+I am learning low-level systems programming by actually building a kernel, which means the codebase may change frequently and is not always clean or stable.
+
+//Notes
+- Some parts of the code were refactored with the help of AI tools, mainly for debugging and stability.
+- There may be outdated comments and experimental implementations.
+- Bugs and unexpected behavior are expected at this stage.
+
+//Feedback
+If you encounter bugs or have suggestions, feel free to open an issue or contact me.
+
+//Contact
+📧 anontrace0@proton.me  
+You can call me Kons (or Stan — either is fine).
+
+---
+
+This project is about learning, not perfection.

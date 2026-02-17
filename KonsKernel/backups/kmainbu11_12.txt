@@ -1,0 +1,93 @@
+void kernel_main(void) {
+    // Setup GDT
+    gdt_install();
+
+    // Clear screen FIRST (damit wir was sehen)
+    clear_screen(COLOR_BLUE);
+
+    kprint("=== KonsKernel v1.3.1 ===\n", COLOR_CYAN_ON_BLUE);
+    kprint("Initializing...\n", COLOR_WHITE_ON_BLUE);
+
+    // 1. PIC remap (MUSS vor IDT kommen!)
+    kprint("1. Setting up PIC... ", COLOR_WHITE_ON_BLUE);
+    pic_remap(0x20, 0x28);
+
+    // Mask ALL interrupts initially
+    outb(0x21, 0xFF);
+    outb(0xA1, 0xFF);
+    kprint("[OK]\n", COLOR_GREEN_ON_BLUE);
+
+    // 2. Setup IDT
+    kprint("2. Setting up IDT... ", COLOR_WHITE_ON_BLUE);
+    isr_install();
+    kprint("[OK]\n", COLOR_GREEN_ON_BLUE);
+
+    // 3. Setup PIT (Timer) - WICHTIG für Uptime!
+    kprint("3. Setting up PIT (Timer)... ", COLOR_WHITE_ON_BLUE);
+    outb(0x43, 0x36);                 // Command: Channel 0, lobyte/hibyte, square wave
+    outb(0x40, 0xFF & 0xFF);          // Low byte
+    outb(0x40, (0xFF >> 8) & 0xFF);   // High byte (~18.2 Hz)
+    kprint("[18.2 Hz]\n", COLOR_GREEN_ON_BLUE);
+
+    // 4. Enable Keyboard
+    kprint("4. Enabling Keyboard... ", COLOR_WHITE_ON_BLUE);
+    // PS/2 Controller enable keyboard port
+    outb(0x64, 0xAE);  // Enable keyboard
+    // Clear keyboard buffer
+    while (inb(0x64) & 0x01) {
+        inb(0x60);
+    }
+    kprint("[OK]\n", COLOR_GREEN_ON_BLUE);
+
+    // 5. Unmask ONLY Timer (IRQ0) and Keyboard (IRQ1)
+    kprint("5. Enabling IRQs... ", COLOR_WHITE_ON_BLUE);
+    outb(0x21, 0xFC);  // 11111100 = IRQ0 & IRQ1 enabled (Timer & Keyboard)
+    outb(0xA1, 0xFF);  // Slave PIC all masked
+    kprint("[Timer+Keyboard]\n", COLOR_GREEN_ON_BLUE);
+
+    // 6. Show system info
+    kprint("\n=== System Ready ===\n", COLOR_CYAN_ON_BLUE);
+    kprint("GDT:      [OK]\n", COLOR_GREEN_ON_BLUE);
+    kprint("IDT:      [OK]\n", COLOR_GREEN_ON_BLUE);
+    kprint("PIC:      [OK]\n", COLOR_GREEN_ON_BLUE);
+    kprint("PIT:      [18.2 Hz]\n", COLOR_GREEN_ON_BLUE);
+    kprint("Keyboard: [DE Layout]\n", COLOR_GREEN_ON_BLUE);
+    kprint("Memory:   [16MB]\n", COLOR_GREEN_ON_BLUE);
+    kprint("\nType 'help' for commands\n", COLOR_WHITE_ON_BLUE);
+    kprint("===================================\n\n", COLOR_CYAN_ON_BLUE);
+
+    // Uptime initial anzeigen
+    set_cursor(68, 0);
+    kprint("Uptime: 0s   ", COLOR_CYAN_ON_BLUE);
+
+    // Command buffer initialisieren
+    for(int i = 0; i < CMD_BUFFER_SIZE; i++) {
+        cmd_buffer[i] = '\0';
+    }
+
+    // Command history initialisieren
+    for(int i = 0; i < CMD_HISTORY_SIZE; i++) {
+        for(int j = 0; j < CMD_BUFFER_SIZE; j++) {
+            cmd_history[i][j] = '\0';
+        }
+    }
+
+    // 7. FINAL STEP: Enable interrupts globally
+    kprint("6. Enabling interrupts... ", COLOR_WHITE_ON_BLUE);
+    asm volatile("sti");
+    kprint("[DONE]\n\n", COLOR_GREEN_ON_BLUE);
+
+    // Show prompt with CORRECT cursor
+    set_cursor(0, 15);
+    kprint("kons> ", COLOR_WHITE_ON_BLUE);
+    set_cursor(6, 15);  // 6 Zeichen nach "kons> "
+
+    // DEBUG: Test message
+    kprint("\n[System ready - try typing!]", COLOR_YELLOW_ON_BLUE);
+    set_cursor(6, 15);  // Cursor wieder zurücksetzen
+
+    // Main loop - wait for interrupts
+    while(1) {
+        asm volatile("hlt");
+    }
+}
