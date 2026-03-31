@@ -12,8 +12,17 @@ char cmd_buffer[CMD_BUFFER_SIZE];
 int cmd_pos = 0;
 
 void execute_command(char *cmd) {
+    char* args = 0;
     while(*cmd == ' ') cmd++;
     if(*cmd == '\0') return;
+
+    for (int i = 0; cmd[i] != '\0'; i++) {
+        if (cmd[i] == ' ') {
+            cmd[i] = '\0';   // trennt command und args
+            args = &cmd[i + 1];
+            break;
+        }
+    }
 
     if(strcmp(cmd, "help") == 0) cmd_help();
     else if(strcmp(cmd, "clear") == 0) cmd_clear();
@@ -28,5 +37,8 @@ void execute_command(char *cmd) {
     else if (strcmp(cmd, "reboot") == 0) cmd_reboot();
     else if (strcmp(cmd, "shutdown") == 0) cmd_shutdown();
     else if (strcmp(cmd, "pci") == 0) pci_scan();
+    else if (strcmp(cmd, "timezone") == 0) {
+        cmd_timezone(args);
+    }
     else unknown_command(cmd);
 }

@@ -14,6 +14,7 @@ void cmd_cat(char* filename);
 void cmd_rm(char* filename);
 void cmd_debug(void);
 void pci_scan(void);
+void cmd_timezone(char* args);
 void unknown_command(char* cmd);
 
 

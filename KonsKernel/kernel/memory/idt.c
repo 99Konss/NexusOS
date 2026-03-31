@@ -5,6 +5,7 @@
 #include "../drivers/keyboard.h"
 #include "../drivers/pic.h"
 #include "../drivers/mouse.h"
+#include "../time/time.h"
 
 #define IDT_ENTRIES 256
 
@@ -78,42 +79,45 @@ void irq_install(void) {
 void irq_handler(struct regs *r) {
     unsigned char irq_num = r->int_no - 32;
 
-    // Timer
+    // Updated!
     if (irq_num == 0) {
+
         static uint32_t timer_ticks = 0;
         timer_ticks++;
 
+        // ungefähr 1x pro Sekunde
         if (timer_ticks % 18 == 0) {
-            // Update uptime
+
             int old_x = cursor_x;
             int old_y = cursor_y;
+
             set_cursor(68, 0);
 
-            uint32_t seconds = timer_ticks / 18;
-            char sec_str[10];
-            int i = 0;
-            uint32_t n = seconds;
+            int h, m, s;
+            get_time(&h, &m, &s);
 
-            if (n == 0) sec_str[i++] = '0';
-            else {
-                char temp[10];
-                int j = 0;
-                while (n > 0) {
-                    temp[j++] = '0' + (n % 10);
-                    n /= 10;
-                }
-                while (j > 0) sec_str[i++] = temp[--j];
-            }
-            sec_str[i] = '\0';
+            char buf[9];
 
-            kprint("Uptime: ", COLOR_CYAN_ON_BLUE);
-            kprint(sec_str, COLOR_WHITE_ON_BLUE);
-            kprint("s   ", COLOR_CYAN_ON_BLUE);
+            buf[0] = '0' + (h / 10);
+            buf[1] = '0' + (h % 10);
+            buf[2] = ':';
+            buf[3] = '0' + (m / 10);
+            buf[4] = '0' + (m % 10);
+            buf[5] = ':';
+            buf[6] = '0' + (s / 10);
+            buf[7] = '0' + (s % 10);
+            buf[8] = '\0';
+
+            kprint("GMT ", COLOR_CYAN_ON_BLUE);
+            kprint(buf, COLOR_WHITE_ON_BLUE);
+            kprint("  ", COLOR_CYAN_ON_BLUE);
 
             set_cursor(old_x, old_y);
         }
+
         pic_send_eoi(irq_num);
     }
+
     // Keyboard - NUR den Aufruf, der Code bleibt in keyboard.c!
     else if (irq_num == 1) {
         unsigned char scancode = inb(0x60);
@@ -141,6 +145,8 @@ void irq_handler(struct regs *r) {
         pic_send_eoi(irq_num);
     }
 }
+
+
 
 // IRQ12 = Maus
 void irq12_handler(void) {

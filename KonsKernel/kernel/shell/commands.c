@@ -6,6 +6,7 @@
 #include "../lib/string.h"
 #include "../drivers/acpi.h"
 #include "../drivers/pci.h"
+#include "../time/time.h"
 
 extern int debug_mode;
 extern struct kfs_inode* inode_table;
@@ -54,7 +55,14 @@ void cmd_about(void) {
 // ========================
 void cmd_clear(void) {
     clear_screen(THEME_BACKGROUND);
-    set_cursor(6, 1);
+
+    cursor_x = 0;
+    cursor_y = 0;
+
+    //shell_prompt();
+
+    cursor_x = 6;
+    set_cursor(cursor_x, cursor_y);
 }
 
 // ========================
@@ -402,4 +410,51 @@ void unknown_command(char* cmd) {
 
 void pci_scan(void) {
     pci_scan_and_print();
+}
+
+// Timezone (idk how to call it)
+
+void cmd_timezone(char* args) {
+
+    if (!args) {
+        kprint("Usage: timezone set <location>\n", TXT_YELLOW);
+        kprint("       timezone show\n", TXT_YELLOW);
+        return;
+    }
+
+    // timezone show
+    if (strcmp(args, "show") == 0) {
+        kprint("Current timezone offset: ", TXT_CYAN);
+
+        char buf[4];
+        buf[0] = '0' + timezone_offset;
+        buf[1] = '\0';
+
+        kprint(buf, TXT_NORMAL);
+        kprint("\n", TXT_NORMAL);
+        return;
+    }
+
+    // timezone set berlin
+    if (strstart(args, "set ")) {
+
+        char* location = args + 4;
+
+        if (strcmp(location, "berlin") == 0) {
+            timezone_offset = 2;
+            kprint("Timezone set to Berlin (UTC+2)\n", TXT_SUCCESS);
+            return;
+        }
+
+        if (strcmp(location, "utc") == 0) {
+            timezone_offset = 0;
+            kprint("Timezone set to UTC\n", TXT_SUCCESS);
+            return;
+        }
+
+        kprint("Unknown location\n", TXT_ERROR);
+        return;
+    }
+
+    kprint("Invalid timezone command\n", TXT_ERROR);
 }

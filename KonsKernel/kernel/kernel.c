@@ -8,7 +8,6 @@
 // ========================
 // MEMORY MANAGEMENT
 // ========================
-#include "GUI/core/gui_core.h"
 #include "memory/gdt.h"
 #include "memory/isr.h"
 #include "memory/heap.h"
@@ -44,7 +43,7 @@
 // ========================
 // GUI
 // ========================
-#include "GUI/include/gui.h"
+
 
 // ========================
 // MULTIBOOT HEADER
@@ -110,16 +109,6 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     ahci_init();
 
 
-    gui_init();
-    mouse_init();
-
-
-    gui_test();    // Rechtecke malen
-    gui_set_mouse_enabled(1);  // Jetzt mit echter Maus!
-
-    gui_run();  // Startet Hauptloop
-
-
     // PIT Timer
     outb(0x43, 0x36);
     outb(0x40, 0xFF);
@@ -150,9 +139,6 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     *ptr++ = 'M';
     *ptr++ = 'B';
     *ptr++ = ' ';
-    *ptr++ = 'R';
-    *ptr++ = 'A';
-    *ptr++ = 'M';
     *ptr = '\0';
     kprint(mem_str, TXT_CYAN);
 
